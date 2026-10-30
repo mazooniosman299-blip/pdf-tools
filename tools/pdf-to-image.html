@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تحويل PDF إلى صور PNG/JPEG مجاناً | أدوات PDF</title>
+  <meta name="description" content="حوّل صفحات PDF إلى صور عالية الجودة PNG أو JPEG. يعمل في المتصفح بدون رفع.">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="header">
+    <nav class="nav">
+      <a href="../index.html" class="logo">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+        أدوات PDF
+      </a>
+      <button class="menu-toggle" aria-label="القائمة">☰</button>
+      <ul class="nav-links">
+        <li><a href="../index.html">الرئيسية</a></li>
+        <li><a href="pdf-to-image.html">PDF إلى صور</a></li>
+        <li><a href="image-to-pdf.html">صور إلى PDF</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="tool-header">
+      <h1>تحويل PDF إلى صور</h1>
+      <p>حوّل كل صفحة أو صفحات محددة إلى صور PNG أو JPEG عالية الجودة.</p>
+    </div>
+
+    <div class="privacy-banner">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+      <div>خصوصيتك محفوظة: التحويل يتم محلياً باستخدام PDF.js.</div>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      <h3>اسحب ملف PDF هنا</h3>
+      <p>أو اضغط لاختيار الملف</p>
+      <input type="file" id="fileInput" class="file-input" accept=".pdf,application/pdf">
+    </div>
+
+    <div id="fileInfo" class="file-list" style="display:none;"></div>
+
+    <div class="options-panel" id="options" style="display:none;">
+      <label>صيغة الصورة</label>
+      <select id="format">
+        <option value="png">PNG (جودة أعلى)</option>
+        <option value="jpeg">JPEG (حجم أصغر)</option>
+      </select>
+      <label>جودة JPEG (إذا اخترت JPEG)</label>
+      <input type="number" id="quality" min="0.1" max="1" step="0.1" value="0.92">
+      <label>مقياس الدقة (1 = عادي، 2 = ضعف الدقة)</label>
+      <input type="number" id="scale" min="0.5" max="3" step="0.5" value="1.5">
+    </div>
+
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+    <div id="status" class="status"></div>
+    <div id="preview" style="display:flex;flex-wrap:wrap;gap:1rem;margin:1.5rem 0;justify-content:center;"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="convertBtn" disabled>تحويل إلى صور</button>
+      <button class="btn btn-secondary" id="clearBtn" style="display:none;">مسح</button>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border:none;padding-top:0;">
+      © 2026 أدوات PDF — <a href="../index.html" style="color:#94a3b8;">الرئيسية</a>
+    </div>
+  </footer>
+
+  <script src="../js/common.js"></script>
+  <script>
+    let selectedFile = null;
+
+    setupDropZone('dropZone', 'fileInput', (files) => {
+      selectedFile = files[0];
+      document.getElementById('fileInfo').style.display = 'block';
+      document.getElementById('fileInfo').innerHTML = `
+        <div class="file-item">
+          <div class="file-info">
+            <div class="file-icon">PDF</div>
+            <div>
+              <div class="file-name">${selectedFile.name}</div>
+              <div class="file-size">${formatFileSize(selectedFile.size)}</div>
+            </div>
+          </div>
+        </div>`;
+      document.getElementById('options').style.display = 'block';
+      document.getElementById('convertBtn').disabled = false;
+      document.getElementById('clearBtn').style.display = 'inline-flex';
+      document.getElementById('preview').innerHTML = '';
+      hideStatus('status');
+    }, false);
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      selectedFile = null;
+      document.getElementById('fileInfo').style.display = 'none';
+      document.getElementById('options').style.display = 'none';
+      document.getElementById('convertBtn').disabled = true;
+      document.getElementById('clearBtn').style.display = 'none';
+      document.getElementById('preview').innerHTML = '';
+    });
+
+    document.getElementById('convertBtn').addEventListener('click', async () => {
+      if (!selectedFile) return;
+      const btn = document.getElementById('convertBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> جاري التحويل...';
+      const preview = document.getElementById('preview');
+      preview.innerHTML = '';
+      setProgress(5);
+
+      try {
+        const pdfjsLib = await loadPdfJs();
+        const ab = await selectedFile.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+        const numPages = pdf.numPages;
+        const format = document.getElementById('format').value;
+        const quality = parseFloat(document.getElementById('quality').value) || 0.92;
+        const scale = parseFloat(document.getElementById('scale').value) || 1.5;
+
+        for (let i = 1; i <= numPages; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: ctx, viewport }).promise;
+
+          const mime = format === 'png' ? 'image/png' : 'image/jpeg';
+          const dataUrl = canvas.toDataURL(mime, quality);
+          
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = `page-${i}.${format === 'png' ? 'png' : 'jpg'}`;
+          link.click();
+
+          const img = document.createElement('img');
+          img.src = dataUrl;
+          img.style.maxWidth = '150px';
+          img.style.borderRadius = '8px';
+          img.style.border = '1px solid #e2e8f0';
+          preview.appendChild(img);
+
+          setProgress(5 + Math.floor(i / numPages * 90));
+        }
+        setProgress(100);
+        showStatus('status', `تم تحويل ${numPages} صفحة بنجاح! تم تحميل الصور.`, 'success');
+      } catch (err) {
+        console.error(err);
+        showStatus('status', 'حدث خطأ أثناء التحويل.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'تحويل إلى صور';
+      }
+    });
+  </script>
+</body>
+</html>

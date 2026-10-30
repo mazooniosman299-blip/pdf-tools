@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تحويل صور إلى PDF مجاناً أونلاين | أدوات PDF</title>
+  <meta name="description" content="حوّل صور JPG و PNG إلى ملف PDF واحد مرتب. خصوصية كاملة وسرعة عالية.">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="header">
+    <nav class="nav">
+      <a href="../index.html" class="logo">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+        أدوات PDF
+      </a>
+      <button class="menu-toggle" aria-label="القائمة">☰</button>
+      <ul class="nav-links">
+        <li><a href="../index.html">الرئيسية</a></li>
+        <li><a href="image-to-pdf.html">صور إلى PDF</a></li>
+        <li><a href="pdf-to-image.html">PDF إلى صور</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="tool-header">
+      <h1>تحويل صور إلى PDF</h1>
+      <p>اختر عدة صور (JPG, PNG) لتكوين ملف PDF واحد مرتب.</p>
+    </div>
+
+    <div class="privacy-banner">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+      <div>خصوصيتك محفوظة: التحويل يتم محلياً.</div>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      <h3>اسحب الصور هنا</h3>
+      <p>أو اضغط لاختيار الصور (JPG, PNG, WebP)</p>
+      <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
+    </div>
+
+    <div id="fileList" class="file-list" style="display:none;"></div>
+
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+    <div id="status" class="status"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="convertBtn" disabled>تحويل إلى PDF</button>
+      <button class="btn btn-secondary" id="clearBtn" style="display:none;">مسح الكل</button>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border:none;padding-top:0;">
+      © 2026 أدوات PDF — <a href="../index.html" style="color:#94a3b8;">الرئيسية</a>
+    </div>
+  </footer>
+
+  <script src="../js/common.js"></script>
+  <script>
+    let selectedFiles = [];
+
+    function renderList() {
+      const list = document.getElementById('fileList');
+      if (!selectedFiles.length) {
+        list.style.display = 'none';
+        document.getElementById('convertBtn').disabled = true;
+        document.getElementById('clearBtn').style.display = 'none';
+        return;
+      }
+      list.style.display = 'block';
+      document.getElementById('convertBtn').disabled = false;
+      document.getElementById('clearBtn').style.display = 'inline-flex';
+      list.innerHTML = selectedFiles.map((f, i) => `
+        <div class="file-item">
+          <div class="file-info">
+            <div class="file-icon" style="background:#dbeafe;color:#1d4ed8;">IMG</div>
+            <div>
+              <div class="file-name">${f.name}</div>
+              <div class="file-size">${formatFileSize(f.size)}</div>
+            </div>
+          </div>
+          <button class="btn btn-danger" style="padding:0.4rem 0.75rem;font-size:0.85rem;" onclick="removeFile(${i})">حذف</button>
+        </div>`).join('');
+    }
+
+    function removeFile(i) {
+      selectedFiles.splice(i, 1);
+      renderList();
+    }
+
+    setupDropZone('dropZone', 'fileInput', (files) => {
+      const images = files.filter(f => f.type.startsWith('image/'));
+      selectedFiles = selectedFiles.concat(images);
+      renderList();
+      hideStatus('status');
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      selectedFiles = [];
+      renderList();
+      hideStatus('status');
+    });
+
+    document.getElementById('convertBtn').addEventListener('click', async () => {
+      if (!selectedFiles.length) return;
+      const btn = document.getElementById('convertBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> جاري التحويل...';
+      setProgress(10);
+
+      try {
+        const { PDFDocument } = await loadPdfLib();
+        const pdfDoc = await PDFDocument.create();
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const ab = await file.arrayBuffer();
+          let image;
+          if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
+            image = await pdfDoc.embedPng(ab);
+          } else {
+            image = await pdfDoc.embedJpg(ab);
+          }
+          const page = pdfDoc.addPage([image.width, image.height]);
+          page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+          setProgress(10 + Math.floor((i + 1) / selectedFiles.length * 80));
+        }
+
+        const bytes = await pdfDoc.save();
+        setProgress(100);
+        downloadBlob(new Blob([bytes], {type:'application/pdf'}), 'images.pdf');
+        showStatus('status', `تم إنشاء PDF من ${selectedFiles.length} صورة بنجاح!`, 'success');
+      } catch (err) {
+        console.error(err);
+        showStatus('status', 'حدث خطأ. تأكد أن الصور بصيغة JPG أو PNG.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'تحويل إلى PDF';
+      }
+    });
+  </script>
+</body>
+</html>
