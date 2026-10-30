@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دمج ملفات PDF مجاناً أونلاين | بدون رفع | أدوات PDF</title>
+  <meta name="description" content="ادمج عدة ملفات PDF في ملف واحد بسرعة وخصوصية كاملة. كل شيء يتم في متصفحك بدون رفع إلى سيرفر. مجاني وبدون علامات مائية.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mazooniosman299-blip.github.io/pdf-tools/tools/merge.html">
+  <meta property="og:title" content="دمج ملفات PDF مجاناً أونلاين">
+  <meta property="og:description" content="ادمج PDF بسهولة وخصوصية 100%. بدون رفع ملفات.">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+</head>
+<body>
+  <header class="header">
+    <nav class="nav">
+      <a href="../index.html" class="logo">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+        أدوات PDF
+      </a>
+      <button class="menu-toggle" aria-label="القائمة">☰</button>
+      <ul class="nav-links">
+        <li><a href="../index.html">الرئيسية</a></li>
+        <li><a href="merge.html">دمج</a></li>
+        <li><a href="split.html">تقسيم</a></li>
+        <li><a href="compress.html">ضغط</a></li>
+        <li><a href="../about.html">عن الموقع</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="tool-header">
+      <h1>دمج ملفات PDF</h1>
+      <p>اجمع عدة ملفات PDF في ملف واحد مرتب. اسحب الملفات وأعد ترتيبها ثم اضغط دمج.</p>
+    </div>
+
+    <div class="privacy-banner">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+      <div>خصوصيتك محفوظة: جميع العمليات تتم داخل متصفحك. الملفات لا تُرفع إلى أي سيرفر.</div>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      <h3>اسحب ملفات PDF هنا</h3>
+      <p>أو اضغط لاختيار الملفات (يمكنك اختيار أكثر من ملف)</p>
+      <input type="file" id="fileInput" class="file-input" accept=".pdf,application/pdf" multiple>
+    </div>
+
+    <div id="fileList" class="file-list" style="display:none;"></div>
+
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="mergeBtn" disabled>
+        <span id="btnText">دمج الملفات</span>
+      </button>
+      <button class="btn btn-secondary" id="clearBtn" style="display:none;">مسح الكل</button>
+    </div>
+
+    <div class="ad-placeholder">مساحة إعلانية</div>
+
+    <section class="seo-content">
+      <h2>كيف تدمج ملفات PDF بسهولة؟</h2>
+      <p>أداة دمج PDF الخاصة بنا تتيح لك جمع عدة مستندات في ملف واحد مرتب خلال ثوانٍ. مثالية للتقارير، العقود، الملاحظات الدراسية، أو أي مستندات متعددة.</p>
+      <h3>خطوات الدمج:</h3>
+      <ul>
+        <li>اسحب ملفات PDF أو اخترها من جهازك</li>
+        <li>أعد ترتيب الملفات بالسحب إن أردت (الترتيب الحالي من الأعلى للأسفل)</li>
+        <li>اضغط زر "دمج الملفات"</li>
+        <li>حمّل الملف المدمج فوراً</li>
+      </ul>
+      <p>الأداة تستخدم مكتبة pdf-lib الحديثة وتعمل بالكامل محلياً في المتصفح لضمان أقصى خصوصية وسرعة.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border:none;padding-top:0;">
+      © 2026 أدوات PDF — <a href="../index.html" style="color:#94a3b8;">العودة للرئيسية</a>
+    </div>
+  </footer>
+
+  <script src="../js/common.js"></script>
+  <script>
+    let selectedFiles = [];
+
+    function renderFileList() {
+      const list = document.getElementById('fileList');
+      if (selectedFiles.length === 0) {
+        list.style.display = 'none';
+        document.getElementById('mergeBtn').disabled = true;
+        document.getElementById('clearBtn').style.display = 'none';
+        return;
+      }
+      list.style.display = 'block';
+      document.getElementById('mergeBtn').disabled = false;
+      document.getElementById('clearBtn').style.display = 'inline-flex';
+      list.innerHTML = selectedFiles.map((file, i) => `
+        <div class="file-item" draggable="true" data-index="${i}">
+          <div class="file-info">
+            <div class="file-icon">PDF</div>
+            <div>
+              <div class="file-name">${file.name}</div>
+              <div class="file-size">${formatFileSize(file.size)}</div>
+            </div>
+          </div>
+          <button class="btn btn-danger" style="padding:0.4rem 0.75rem;font-size:0.85rem;" onclick="removeFile(${i})">حذف</button>
+        </div>
+      `).join('');
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      renderFileList();
+    }
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      selectedFiles = [];
+      renderFileList();
+      hideStatus('status');
+    });
+
+    setupDropZone('dropZone', 'fileInput', (files) => {
+      const pdfs = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+      selectedFiles = selectedFiles.concat(pdfs);
+      renderFileList();
+      hideStatus('status');
+    });
+
+    document.getElementById('mergeBtn').addEventListener('click', async () => {
+      if (selectedFiles.length < 1) return;
+      const btn = document.getElementById('mergeBtn');
+      const btnText = document.getElementById('btnText');
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span> جاري الدمج...';
+      hideStatus('status');
+      setProgress(10);
+
+      try {
+        const { PDFDocument } = await loadPdfLib();
+        const mergedPdf = await PDFDocument.create();
+        setProgress(20);
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+          const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+          pages.forEach(page => mergedPdf.addPage(page));
+          setProgress(20 + Math.floor((i + 1) / selectedFiles.length * 70));
+        }
+
+        const pdfBytes = await mergedPdf.save();
+        setProgress(100);
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        downloadBlob(blob, 'merged.pdf');
+        showStatus('status', 'تم الدمج بنجاح! تم تحميل الملف.', 'success');
+      } catch (err) {
+        console.error(err);
+        showStatus('status', 'حدث خطأ أثناء الدمج. تأكد أن الملفات صالحة وغير محمية.', 'error');
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = 'دمج الملفات';
+      }
+    });
+  </script>
+</body>
+</html>
