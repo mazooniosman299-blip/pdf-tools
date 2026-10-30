@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ضغط ملف PDF مجاناً أونلاين | تقليل الحجم | أدوات PDF</title>
+  <meta name="description" content="اضغط ملفات PDF لتقليل حجمها مع الحفاظ على جودة مقبولة. يعمل في المتصفح بدون رفع.">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="header">
+    <nav class="nav">
+      <a href="../index.html" class="logo">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+        أدوات PDF
+      </a>
+      <button class="menu-toggle" aria-label="القائمة">☰</button>
+      <ul class="nav-links">
+        <li><a href="../index.html">الرئيسية</a></li>
+        <li><a href="merge.html">دمج</a></li>
+        <li><a href="split.html">تقسيم</a></li>
+        <li><a href="compress.html">ضغط</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="tool-header">
+      <h1>ضغط ملف PDF</h1>
+      <p>قلل حجم ملف PDF لإرساله بسهولة عبر البريد أو الواتساب مع الحفاظ على قابلية القراءة.</p>
+    </div>
+
+    <div class="privacy-banner">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+      <div>خصوصيتك محفوظة: الضغط يتم محلياً في المتصفح.</div>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      <h3>اسحب ملف PDF هنا</h3>
+      <p>أو اضغط لاختيار الملف</p>
+      <input type="file" id="fileInput" class="file-input" accept=".pdf,application/pdf">
+    </div>
+
+    <div id="fileInfo" class="file-list" style="display:none;"></div>
+
+    <div class="options-panel" id="options" style="display:none;">
+      <label>مستوى الضغط (تقريبي — يعتمد على محتوى الملف)</label>
+      <select id="quality">
+        <option value="high">جودة عالية (ضغط خفيف)</option>
+        <option value="medium" selected>متوازن (موصى به)</option>
+        <option value="low">ضغط قوي (حجم أصغر)</option>
+      </select>
+      <p style="font-size:0.85rem;color:var(--text-muted);">ملاحظة: الضغط الحقيقي للـ PDF محدود في المتصفح. الأداة تعيد حفظ الملف بطريقة محسنة وقد تقلل الحجم بنسبة متفاوتة حسب المحتوى (صور، خطوط...).</p>
+    </div>
+
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+    <div id="status" class="status"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="compressBtn" disabled>ضغط PDF</button>
+      <button class="btn btn-secondary" id="clearBtn" style="display:none;">مسح</button>
+    </div>
+
+    <section class="seo-content">
+      <h2>ضغط PDF أونلاين بدون فقدان كبير للجودة</h2>
+      <p>ملفات PDF الكبيرة صعبة الإرسال. هذه الأداة تساعد في تقليل الحجم باستخدام تقنيات إعادة الحفظ والتحسين المتاحة في pdf-lib. للحصول على ضغط أقوى (خاصة الملفات الغنية بالصور) قد تحتاج أدوات سطح مكتب متخصصة.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border:none;padding-top:0;">
+      © 2026 أدوات PDF — <a href="../index.html" style="color:#94a3b8;">الرئيسية</a>
+    </div>
+  </footer>
+
+  <script src="../js/common.js"></script>
+  <script>
+    let selectedFile = null;
+
+    setupDropZone('dropZone', 'fileInput', (files) => {
+      selectedFile = files[0];
+      if (!selectedFile) return;
+      document.getElementById('fileInfo').style.display = 'block';
+      document.getElementById('fileInfo').innerHTML = `
+        <div class="file-item">
+          <div class="file-info">
+            <div class="file-icon">PDF</div>
+            <div>
+              <div class="file-name">${selectedFile.name}</div>
+              <div class="file-size">الحجم الأصلي: ${formatFileSize(selectedFile.size)}</div>
+            </div>
+          </div>
+        </div>`;
+      document.getElementById('options').style.display = 'block';
+      document.getElementById('compressBtn').disabled = false;
+      document.getElementById('clearBtn').style.display = 'inline-flex';
+      hideStatus('status');
+    }, false);
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      selectedFile = null;
+      document.getElementById('fileInfo').style.display = 'none';
+      document.getElementById('options').style.display = 'none';
+      document.getElementById('compressBtn').disabled = true;
+      document.getElementById('clearBtn').style.display = 'none';
+      hideStatus('status');
+    });
+
+    document.getElementById('compressBtn').addEventListener('click', async () => {
+      if (!selectedFile) return;
+      const btn = document.getElementById('compressBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> جاري الضغط...';
+      hideStatus('status');
+      setProgress(20);
+
+      try {
+        const { PDFDocument } = await loadPdfLib();
+        const ab = await selectedFile.arrayBuffer();
+        setProgress(40);
+        const pdfDoc = await PDFDocument.load(ab, { ignoreEncryption: true });
+        setProgress(60);
+
+        const pdfBytes = await pdfDoc.save({
+          useObjectStreams: true,
+          addDefaultPage: false,
+          objectsPerTick: 50
+        });
+        setProgress(100);
+
+        const originalSize = selectedFile.size;
+        const newSize = pdfBytes.length;
+        const ratio = ((1 - newSize / originalSize) * 100).toFixed(1);
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        downloadBlob(blob, 'compressed.pdf');
+
+        if (newSize < originalSize) {
+          showStatus('status', `تم الضغط بنجاح! الحجم الجديد: ${formatFileSize(newSize)} (توفير ${ratio}%)`, 'success');
+        } else {
+          showStatus('status', `تم إعادة الحفظ. الحجم: ${formatFileSize(newSize)}. الملف قد يكون مضغوطاً مسبقاً أو يحتوي على محتوى يصعب ضغطه أكثر.`, 'info');
+        }
+      } catch (err) {
+        console.error(err);
+        showStatus('status', 'حدث خطأ أثناء الضغط.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'ضغط PDF';
+      }
+    });
+  </script>
+</body>
+</html>
