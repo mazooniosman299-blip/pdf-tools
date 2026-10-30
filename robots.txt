@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mazooniosman299-blip.github.io/pdf-tools/sitemap.xml
